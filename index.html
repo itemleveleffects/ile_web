@@ -1,1 +1,276 @@
-Gotta start somewhere
+<!doctype html>
+<html>
+<style>
+.slidecontainer {
+    width: 15%;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 10%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+</style>
+<head>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<title>D3.JS Bar Chart</title>
+</head>
+
+<body>
+  <div id="header">Generate some random data to see if item level effects matter in what you study!</div>
+<div class="slidecontainer" id="slider1">
+  <p>Number of subjects: <span id="nielement"></span></p>
+  <input type="range" min="1" max="100" value="1" class="slider" id="nislider" step="1">
+  <p>Items per class: <span id="nselement"></span></p>
+  <input type="range" min="1" max="100" value="1" class="slider" id="nsslider" step="1">
+  <p>Effect size: <span id="eelement"></span></p>
+  <input type="range" min="0" max="5" value="1" class="slider" id="eslider" step="0.1">
+
+    <p>Standard deviation of subjects: <span id="selement"></span></p>
+      <input type="range" min="0" max="5" value="1" class="slider" id="sslider" step="0.1">
+
+    <p>Standard deviation of items in class 1: <span id="i1element"></span></p>
+  <input type="range" min="0" max="5" value="1" class="slider" id="i1slider" step="0.1">
+    <p>Standard deviation of items in class 2: <span id="i2element"></span></p>
+  <input type="range" min="0" max="5" value="1" class="slider" id="i2slider" step="0.1">
+</div>
+<div id="line-1"></div>
+
+<script>
+var nislider = document.getElementById("nislider");
+var nielement = document.getElementById("nielement");
+nielement.innerHTML = nislider.value;
+var nsslider = document.getElementById("nsslider");
+var nselement = document.getElementById("nselement");
+nselement.innerHTML = nsslider.value;
+var eslider = document.getElementById("eslider");
+var eelement = document.getElementById("eelement");
+eelement.innerHTML = eslider.value;
+var sslider = document.getElementById("sslider");
+var selement = document.getElementById("selement");
+selement.innerHTML = sslider.value;
+var i1slider = document.getElementById("i1slider");
+var i1element = document.getElementById("i1element");
+i1element.innerHTML =i1slider.value;
+var i2slider = document.getElementById("i2slider");
+var i2element = document.getElementById("i2element");
+i2element.innerHTML =i2slider.value;
+nislider.oninput = function() {
+  nielement.innerHTML = this.value;
+}
+nsslider.oninput = function() {
+  nselement.innerHTML = this.value;
+}
+eslider.oninput = function() {
+  eelement.innerHTML = this.value;
+}
+sslider.oninput = function() {
+  selement.innerHTML = this.value;
+}
+i1slider.oninput = function() {
+  i1element.innerHTML = this.value;
+}
+i2slider.oninput = function() {
+  i2element.innerHTML = this.value;
+}
+
+Math.nrand = function() {
+    var x1, x2, rad, y1;
+    do {
+        x1 = 2 * this.random() - 1;
+        x2 = 2 * this.random() - 1;
+        rad = x1 * x1 + x2 * x2;
+    } while(rad >= 1 || rad == 0);
+    var c = this.sqrt(-2 * Math.log(rad) / rad);
+    return x1 * c;
+};
+
+function gen_range(minVal, maxVal, nVals){
+    vals = [...Array(nVals).keys()];
+    for (var i = 0; i < vals.length; i++) {
+        vals[i] = (vals[i]/((vals.length -1)) * (maxVal-minVal)) + minVal;
+        };
+    return vals
+    };
+function gen_norm_plot_data(vals, mean, stdDev){
+    data = []
+    for (var i = 0; i < vals.length; i++) {
+        norm_val = Math.exp((-0.5) * Math.pow((vals[i] - mean) / stdDev, 2));
+        data.push({x: vals[i],
+                   y: norm_val})
+        }
+    return data
+    };
+var pxs = gen_range(-5,5,10000);
+var line1 = line()
+              .$el(d3.select("#line-1"))
+              .height(100) // Set height
+              .data(get_data(pxs,
+                             0,
+                             i1slider.value,
+                             i2slider.value)) // Set data
+              .render();
+line1
+              .$el(d3.select("#line-1"))
+              .height(100) // Set height
+              .data(get_data(pxs,
+                             fixed,
+                             i1slider.value,
+                             i2slider.value)) // Set data
+              .render();
+
+function get_data(pxs, fixed, item1_re, item2_re){
+    var use_pxs = pxs.slice()
+    for (var i = 0; i < pxs.length; i++) {
+        use_pxs[i] += fixed;
+        };
+    item_pd = gen_norm_plot_data(use_pxs, fixed, item2_re);
+    return item_pd
+}
+function line(){
+  // Default settings
+  var $el = d3.select("body")
+  var width = 960;
+  var height = 500;
+  var color = "steelblue";
+  var margin = {top: 10, right: 30, bottom: 30, left: 30};
+  var data = [];
+  var svg, y, xAxis, yAxis, line;
+  var x = d3.scaleLinear().range([0, width]);
+
+  var object = {};
+
+  // Method for render/refresh graph
+  object.render = function(){
+    if(!svg){ // Render first time
+      y = d3.scaleLinear()
+      .range([height, 0]);
+
+      xAxis = d3.axisBottom()
+      .scale(x);
+
+      yAxis = d3.axisLeft()
+        .scale(y);
+
+      line = d3.line()
+        .x(function(d) { return x(d.x); })
+        .y(function(d) { return y(d.y); })
+        .curve(d3.curveBasis);
+
+      svg = $el.append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      x.domain(d3.extent(data, function(d) { return d.x; }));
+      y.domain(d3.extent(data, function(d) { return d.y; }));
+      console.log(d3.extent(data, function(d) { return d.x; }));
+      console.log(data)
+      svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+      svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+
+      svg.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("stroke", color)
+        .attr("d", line);
+    }else{ //Refresh
+      object.data(data);
+      x.domain(d3.extent(data, function(d) { return d.x; }));
+      y.domain(d3.extent(data, function(d) { return d.y; }));
+
+      svg.select("g.y")
+        .transition()
+        .duration(1000)
+        .call(yAxis);
+
+      svg.select("g.x")
+        .transition()
+        .duration(1000)
+        .call(xAxis);
+
+      svg.selectAll("path.line")
+       .datum(data)
+        .transition()
+        .duration(1000)
+       .attr("d", line);
+    } 
+    return object;
+  };
+
+  // Getter and setter methods
+  object.data = function(value){
+    if (!arguments.length) return data;
+    data = value;
+    return object;
+  };
+
+  object.$el = function(value){
+    if (!arguments.length) return $el;
+    $el = value;
+    return object;
+  };
+
+  object.width = function(value){
+    if (!arguments.length) return width;
+    width = value;
+    return object;
+  };
+
+  object.height = function(value){
+    if (!arguments.length) return height;
+    height = value;
+    return object;
+  };
+
+  object.color = function(value){
+    if (!arguments.length) return color;
+    color = value;
+    return object;
+  };
+  object.x = function(value){
+    if (!arguments.length) return x;
+    x = value;
+    return object;
+  }
+  return object;
+};
+</script>
+</body>
+</html>
