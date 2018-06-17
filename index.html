@@ -56,12 +56,12 @@
   <input type="range" min="0" max="5" value="1" class="slider" id="eslider" step="0.1">
 
     <p>Standard deviation of subjects: <span id="selement"></span></p>
-      <input type="range" min="0" max="5" value="1" class="slider" id="sslider" step="0.1">
+      <input type="range" min="0.1" max="5" value="1" class="slider" id="sslider" step="0.1">
 
     <p>Standard deviation of items in class 1: <span id="i1element"></span></p>
-  <input type="range" min="0" max="5" value="1" class="slider" id="i1slider" step="0.1">
+  <input type="range" min="0.1" max="5" value="1" class="slider" id="i1slider" step="0.1">
     <p>Standard deviation of items in class 2: <span id="i2element"></span></p>
-  <input type="range" min="0" max="5" value="1" class="slider" id="i2slider" step="0.1">
+  <input type="range" min="0.1" max="5" value="1" class="slider" id="i2slider" step="0.1">
 </div>
 <div id="line-1"></div>
 
@@ -93,15 +93,20 @@ nsslider.oninput = function() {
 eslider.oninput = function() {
   eelement.innerHTML = this.value;
 }
+eslider.onchange = replot_itmes
 sslider.oninput = function() {
   selement.innerHTML = this.value;
 }
 i1slider.oninput = function() {
   i1element.innerHTML = this.value;
 }
+i1slider.onchange = replot_itmes
+
 i2slider.oninput = function() {
   i2element.innerHTML = this.value;
 }
+i2slider.onchange = replot_itmes
+
 
 Math.nrand = function() {
     var x1, x2, rad, y1;
@@ -115,7 +120,7 @@ Math.nrand = function() {
 };
 
 function gen_range(minVal, maxVal, nVals){
-    vals = [...Array(nVals).keys()];
+    var vals = [...Array(nVals).keys()];
     for (var i = 0; i < vals.length; i++) {
         vals[i] = (vals[i]/((vals.length -1)) * (maxVal-minVal)) + minVal;
         };
@@ -124,46 +129,45 @@ function gen_range(minVal, maxVal, nVals){
 function gen_norm_plot_data(vals, mean, stdDev){
     data = []
     for (var i = 0; i < vals.length; i++) {
-        norm_val = Math.exp((-0.5) * Math.pow((vals[i] - mean) / stdDev, 2));
+        norm_val = Math.exp((-0.5) * Math.pow((vals[i] - mean) / stdDev, 2))/Math.sqrt(2 * Math.PI * stdDev);
         data.push({x: vals[i],
                    y: norm_val})
         }
     return data
     };
-var pxs = gen_range(-5,5,10000);
-var line1 = line()
+var item_lines = lines()
               .$el(d3.select("#line-1"))
               .height(100) // Set height
-              .data(get_data(pxs,
-                             0,
-                             i1slider.value,
-                             i2slider.value)) // Set data
+              .data1(get_data(0,
+                             parseFloat(i1slider.value))) // Set data for line 1
+              .data2(get_data(parseFloat(eslider.value),
+                              parseFloat(i2slider.value))) // Set data for line 2
               .render();
-line1
-              .$el(d3.select("#line-1"))
-              .height(100) // Set height
-              .data(get_data(pxs,
-                             fixed,
-                             i1slider.value,
-                             i2slider.value)) // Set data
-              .render();
-
-function get_data(pxs, fixed, item1_re, item2_re){
-    var use_pxs = pxs.slice()
-    for (var i = 0; i < pxs.length; i++) {
-        use_pxs[i] += fixed;
-        };
-    item_pd = gen_norm_plot_data(use_pxs, fixed, item2_re);
+function replot_itmes(){
+    item_lines
+        .data1(get_data(0,
+                         parseFloat(i1slider.value))) // Set data for line 1
+          .data2(get_data(
+                         parseFloat(eslider.value),
+                         parseFloat(i2slider.value))) // Set data for line 2
+          .render()};
+function get_data(fixed, item_re){
+    var use_pxs = gen_range((-4 * item_re )+fixed,(4 * item_re) + fixed,10000);
+    console.log(use_pxs)
+    console.log(fixed)
+    item_pd = gen_norm_plot_data(use_pxs, fixed, item_re);
     return item_pd
 }
-function line(){
+function lines(){
   // Default settings
   var $el = d3.select("body")
-  var width = 960;
+  var width = 900;
   var height = 500;
-  var color = "steelblue";
+  var color1 = "#2c6bd2";
+  var color2 = "#4c8d24";
   var margin = {top: 10, right: 30, bottom: 30, left: 30};
-  var data = [];
+  var data1 = [];
+  var data2 = [];
   var svg, y, xAxis, yAxis, line;
   var x = d3.scaleLinear().range([0, width]);
 
@@ -171,7 +175,8 @@ function line(){
 
   // Method for render/refresh graph
   object.render = function(){
-    if(!svg){ // Render first time
+    if(!svg){ 
+      // Render first time
       y = d3.scaleLinear()
       .range([height, 0]);
 
@@ -191,11 +196,20 @@ function line(){
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      x.domain([d3.min( 
+                  [d3.min(data1, function(d) { return d.x; }),
+                   d3.min(data2, function(d) { return d.x; })]
+                  ),
+                d3.max(
+                  [d3.max(data1, function(d) { return d.x; }),
+                   d3.max(data2, function(d) { return d.x; })])
+                ]);
+      y.domain([0,
+                d3.max(
+                  [d3.max(data1, function(d) { return d.y; }),
+                   d3.max(data2, function(d) { return d.y; })])
+                ]);
 
-      x.domain(d3.extent(data, function(d) { return d.x; }));
-      y.domain(d3.extent(data, function(d) { return d.y; }));
-      console.log(d3.extent(data, function(d) { return d.x; }));
-      console.log(data)
       svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
@@ -206,14 +220,36 @@ function line(){
         .call(yAxis)
 
       svg.append("path")
-        .datum(data)
-        .attr("class", "line")
-        .attr("stroke", color)
+        .datum(data1)
+        .attr("class", "line1")
+        .attr("stroke", color1)
+        .attr("fill", color1)
+        .attr("fill-opacity", 0.5)
+        .attr("d", line);
+
+      svg.append("path")
+        .datum(data2)
+        .attr("class", "line2")
+        .attr("stroke", color2)
+        .attr("fill", color2)
+        .attr("fill-opacity", 0.5)
         .attr("d", line);
     }else{ //Refresh
-      object.data(data);
-      x.domain(d3.extent(data, function(d) { return d.x; }));
-      y.domain(d3.extent(data, function(d) { return d.y; }));
+      object.data1(data1);
+      object.data2(data2);
+      x.domain([d3.min( 
+                  [d3.min(data1, function(d) { return d.x; }),
+                   d3.min(data2, function(d) { return d.x; })]
+                  ),
+                d3.max(
+                  [d3.max(data1, function(d) { return d.x; }),
+                   d3.max(data2, function(d) { return d.x; })])
+                ]);
+      y.domain([0,
+                d3.max(
+                  [d3.max(data1, function(d) { return d.y; }),
+                   d3.max(data2, function(d) { return d.y; })])
+                ]);
 
       svg.select("g.y")
         .transition()
@@ -225,8 +261,13 @@ function line(){
         .duration(1000)
         .call(xAxis);
 
-      svg.selectAll("path.line")
-       .datum(data)
+      svg.selectAll("path.line1")
+       .datum(data1)
+        .transition()
+        .duration(1000)
+       .attr("d", line);
+      svg.selectAll("path.line2")
+       .datum(data2)
         .transition()
         .duration(1000)
        .attr("d", line);
@@ -235,9 +276,14 @@ function line(){
   };
 
   // Getter and setter methods
-  object.data = function(value){
-    if (!arguments.length) return data;
-    data = value;
+  object.data1 = function(value){
+    if (!arguments.length) return data1;
+    data1 = value;
+    return object;
+  };
+  object.data2 = function(value){
+    if (!arguments.length) return data2;
+    data2 = value;
     return object;
   };
 
