@@ -2,12 +2,12 @@
 <html>
 <style>
 .slidecontainer {
-    width: 15%;
+    width: 100%;
 }
 
 .slider {
     -webkit-appearance: none;
-    width: 10%;
+    width: 100%;
     height: 25px;
     background: #d3d3d3;
     outline: none;
@@ -35,6 +35,21 @@
     background: #4CAF50;
     cursor: pointer;
 }
+
+.container{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.left-float{
+    flex-grow: 1;
+    flex-basis: auto;
+    max-width: 275px;
+}
+.flex-item{
+    flex-grow: 3;
+    padding: 20px;
+}
 </style>
 <head>
 <meta charset="utf-8">
@@ -42,28 +57,34 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-<title>D3.JS Bar Chart</title>
+<title>Item Level Effects</title>
 </head>
 
 <body>
   <div id="header">Generate some random data to see if item level effects matter in what you study!</div>
-<div class="slidecontainer" id="slider1">
-  <p>Number of subjects: <span id="nielement"></span></p>
-  <input type="range" min="1" max="100" value="1" class="slider" id="nislider" step="1">
-  <p>Items per class: <span id="nselement"></span></p>
-  <input type="range" min="1" max="100" value="1" class="slider" id="nsslider" step="1">
-  <p>Effect size: <span id="eelement"></span></p>
-  <input type="range" min="0" max="5" value="1" class="slider" id="eslider" step="0.1">
-
-    <p>Standard deviation of subjects: <span id="selement"></span></p>
-      <input type="range" min="0.1" max="5" value="1" class="slider" id="sslider" step="0.1">
-
-    <p>Standard deviation of items in class 1: <span id="i1element"></span></p>
-  <input type="range" min="0.1" max="5" value="1" class="slider" id="i1slider" step="0.1">
-    <p>Standard deviation of items in class 2: <span id="i2element"></span></p>
-  <input type="range" min="0.1" max="5" value="1" class="slider" id="i2slider" step="0.1">
+  <div id="header">First, estimate some information about the stimuli you use.</div>
+  <div class="container">
+    <div class="left-float" id="slider1">
+      <p>What's your hypothetical effect size? <span id="eelement"></span></p>
+      <input type="range" min="0" max="5" value="1" class="slider" id="eslider" step="0.1">
+          <p>How variable are responses to class 1? <span id="i1element"></span></p>
+      <input type="range" min="0.1" max="5" value="1" class="slider" id="i1slider" step="0.1">
+        <p>How variable are responses to class 2? <span id="i2element"></span></p>
+      <input type="range" min="0.1" max="5" value="1" class="slider" id="i2slider" step="0.1">
+    </div>
+  <div class="flex-item" id="itemline"></div>
 </div>
-<div id="line-1"></div>
+<div id="header">Now, we'll pick stimuli and run an experiment.</div>
+<div class="container">
+    <div class="left-float" id="slider1">
+      <p>Items per class: <span id="nselement"></span></p>
+      <input type="range" min="0" max="100" value="0" class="slider" id="nsslider" step="1">
+      <p>Number of subjects: <span id="nielement"></span></p>
+      <input type="range" min="0" max="100" value="0" class="slider" id="nislider" step="1">
+      <p>Standard deviation of subjects: <span id="selement"></span></p>
+        <input type="range" min="0.1" max="5" value="1" class="slider" id="sslider" step="0.1">
+    </div>
+</div>
 
 <script>
 var nislider = document.getElementById("nislider");
@@ -136,7 +157,7 @@ function gen_norm_plot_data(vals, mean, stdDev){
     return data
     };
 var item_lines = lines()
-              .$el(d3.select("#line-1"))
+              .$el(d3.select("#itemline"))
               .height(100) // Set height
               .data1(get_data(0,
                              parseFloat(i1slider.value))) // Set data for line 1
@@ -161,11 +182,11 @@ function get_data(fixed, item_re){
 function lines(){
   // Default settings
   var $el = d3.select("body")
-  var width = 900;
-  var height = 500;
+  var width = 400;
+  var height = 600;
   var color1 = "#2c6bd2";
   var color2 = "#4c8d24";
-  var margin = {top: 10, right: 30, bottom: 30, left: 30};
+  var margin = {top: 10, right: 30, bottom: 30, left: 50};
   var data1 = [];
   var data2 = [];
   var svg, y, xAxis, yAxis, line;
@@ -215,9 +236,25 @@ function lines(){
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
 
+      //x axis label
+      svg.append("text")             
+      .attr("transform",
+            "translate(" + (width/2) + " ," + 
+                           (height + margin.top + 20) + ")")
+      .style("text-anchor", "middle")
+      .text("Normalized Response");
+
       svg.append("g")
         .attr("class", "y axis")
         .call(yAxis)
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Density");      
 
       svg.append("path")
         .datum(data1)
