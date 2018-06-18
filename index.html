@@ -97,7 +97,7 @@
         </div>
 
 
-        <div class="row mt-3 ml-3 mr-3 chartarea">
+        <div class="row mt-3 ml-3 mr-3 chartarea" id='item_chart'>
           <p class="lead">Now, we'll pick stimuli and run an experiment.</p>
         </div>
 
@@ -106,17 +106,18 @@
           <p>Items per class:
             <span id="nielement"></span>
           </p>
-          <input type="range" min="0" max="100" value="0" class="slider" id="nislider" step="1">
+          <input type="range" min="0" max="50" value="0" class="slider" id="nislider" step="1">
           <p>Number of subjects:
             <span id="nselement"></span>
           </p>
-          <input type="range" min="0" max="100" value="0" class="slider" id="nsslider" step="1">
+          <input type="range" min="0" max="50" value="0" class="slider" id="nsslider" step="1">
           <p>Standard deviation of subjects:
             <span id="selement"></span>
           </p>
           <input type="range" min="0.1" max="5" value="1" class="slider" id="sslider" step="0.1">
-          <!--</div>-->
+        <div class="mx-auto" id="subjline"></div>
         </div>
+        
     </div>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
